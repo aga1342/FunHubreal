@@ -1,5 +1,5 @@
 -- ============================================================
--- FUNHUB COMBINED GUI V5.2
+-- JSMHUB COMBINED GUI V5.2
 -- Includes: Watermark, Fun Button, Actions Panel, Main Panel
 -- Fun button opens/closes the main tabbed panel
 -- Features wired from ZenoHub + Flash TP X-Ray & Optimizer
