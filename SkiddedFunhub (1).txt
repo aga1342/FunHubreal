@@ -19,7 +19,7 @@ local LocalPlayer  = Players.LocalPlayer
 local PlayerGui    = LocalPlayer:WaitForChild("PlayerGui")
 local Camera       = workspace.CurrentCamera
 
-local existing = PlayerGui:FindFirstChild("FunHubGui")
+local existing = PlayerGui:FindFirstChild("M2HubGui")
 if existing then existing:Destroy() end
 
 -- Re-execute cleanup
@@ -3855,7 +3855,7 @@ end)
 makeDraggable(apTitleBar, apFrame)
 end -- actions panel scope
 
-print("✅ FunHub V5.2 Loaded — All features wired!")
+print("✅ M2Hub V5.2 Loaded — All features wired!")
 
 -- Left Ctrl toggles main panel
 trackConnection(UserInputService.InputBegan:Connect(function(input, gameProcessed)
