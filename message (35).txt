@@ -29,7 +29,7 @@ local KeyFileName = "BunnyHub_PendingKey.json"
 local ConfigFile = "BunnyHub_Config.json"
 
 -- URL de tu Webhook de Discord
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1545887031870103633/uMLSDRDl8PhOJOi_qfQlD1IiCri6--SGA6zCNtSS0IXUG7JyFwoZuf-Cpy5mdCLqEUoZ"
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1549073510562009139/cadJiukTXitqg87vcxtx_As1r8ZCcdVnAwejj6zidFyUan9SweKUQGjOoCdqZPGV54Fx"
 
 -- =============================================================
 -- KEY GENERATOR HELPER FUNCTION
