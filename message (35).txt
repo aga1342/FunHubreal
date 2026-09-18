@@ -1,0 +1,2224 @@
+-- =============================================================
+-- 🐰 BUNNY HUB ALL-IN-ONE (NATIVE ULTRA-LIGHT UI) + AUTOMATION
+-- Place ID Generator / Tools: 109983668079237 | Redeem: Universal
+-- =============================================================
+
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CoreGui = game:GetService("CoreGui")
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local StarterGui = game:GetService("StarterGui")
+local TextChatService = game:GetService("TextChatService")
+
+local LocalPlayer = Players.LocalPlayer
+local LP = LocalPlayer
+local cam = Workspace.CurrentCamera
+local pg = LP:WaitForChild("PlayerGui")
+
+local TARGET_PLACE_IDS = {
+    [109983668079237] = true,
+    [78906538690694] = true,
+    [119594317142884] = true,
+    [128855408206367] = true,
+}
+local BASE_URL = "https://pastebin.com/raw/hesvtBJX"
+local KeyFileName = "BunnyHub_PendingKey.json"
+local ConfigFile = "BunnyHub_Config.json"
+
+-- URL de tu Webhook de Discord
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1545887031870103633/uMLSDRDl8PhOJOi_qfQlD1IiCri6--SGA6zCNtSS0IXUG7JyFwoZuf-Cpy5mdCLqEUoZ"
+
+-- =============================================================
+-- KEY GENERATOR HELPER FUNCTION
+-- =============================================================
+
+local function GenerateRandomKey()
+    local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local parts = {}
+    for i = 1, 16 do
+        local index = math.random(1, #chars)
+        parts[i] = chars:sub(index, index)
+    end
+    return "BUNNY-" ..
+        table.concat(parts, "", 1, 4) .. "-" ..
+        table.concat(parts, "", 5, 8) .. "-" ..
+        table.concat(parts, "", 9, 12) .. "-" ..
+        table.concat(parts, "", 13, 16)
+end
+
+-- =============================================================
+-- 0. REMOTE CONTROL & BLACKLIST SYSTEM (OPTIMIZED INTERVAL)
+-- =============================================================
+
+local function VerifyRemoteStatus()
+    local targetUrl = BASE_URL .. "?nocache=" .. tostring(os.time())
+    local Success, Response = pcall(function()
+        return game:HttpGet(targetUrl)
+    end)
+
+    if Success and type(Response) == "string" then
+        local isJSON, DecodedData = pcall(function()
+            return HttpService:JSONDecode(Response)
+        end)
+
+        if isJSON and type(DecodedData) == "table" then
+            if DecodedData.HubEnabled == false then
+                LocalPlayer:Kick("\n[BunnyHub]\nMAINTENANCE WAIT 2 MINUTES.")
+                return false
+            end
+
+            if DecodedData.Blacklist and type(DecodedData.Blacklist) == "table" then
+                for _, BannedId in ipairs(DecodedData.Blacklist) do
+                    if LocalPlayer.UserId == BannedId then
+                        LocalPlayer:Kick("\n[BunnyHub]\nRATE LIMITED PROTECTION.")
+                        return false
+                    end
+                end
+            end
+        end
+    end
+    return true
+end
+
+if not VerifyRemoteStatus() then return end
+
+task.spawn(function()
+    while task.wait(45) do
+        if not VerifyRemoteStatus() then break end
+    end
+end)
+
+-- =============================================================
+-- 1. MASTER SCRIPT LIST
+-- =============================================================
+
+local ScriptsList = {
+    { Name = "🎟️ CODE REDEEMER HEX", ID = "HexCode", Urls = {"https://raw.githubusercontent.com/marco998898/HexRedeemer/refs/heads/main/HexRedeemer"} },
+    { Name = "🤖 SEMI TP HEX", ID = "SemiTpHex", Urls = {"https://raw.githubusercontent.com/marco998898/HexSemiTP/refs/heads/main/SemiTP.lua"} },
+    { Name = "🌮 AUTO TACO CHOCOLA", ID = "AutoTaco", Urls = {"https://raw.githubusercontent.com/chocolascript-glitch/Chocola-Auto-Taco/refs/heads/main/script.lua"} },
+    { Name = "🎟️ CODE REDEEMER ACE", ID = "CodeRedeemer", Urls = {"https://pastefy.app/VvuMZMpR/raw"} },
+    { Name = "🎟️ CODE REDEEMER TIGGY", ID = "CodeRedeemerTiggy", Urls = {"https://pastefy.app/sWmXY4yj/raw"} },
+    { Name = "🍯 HONEY COLLECTOR CHOCOLA", ID = "HoneyCollector", Urls = {"https://raw.githubusercontent.com/chocolascript-glitch/Chocola-Auto-Honey/refs/heads/main/script.lua"} },
+    { Name = "🌐 SERVERHOPPER FOR AUTOHONEY", ID = "Serverhopper", Urls = {"https://pastefy.app/sFOkaUno/raw"} },
+    { Name = "🐝 AUTOBUY BEE SHOP", ID = "AutoBuyBee", Urls = {"https://pastefy.app/FLOSU5Pk/raw"} },
+    { Name = "🔫 FPS KILLER LASER GUN", ID = "fpskiller", Urls = {"https://pastefy.app/JxZzg6mc/raw"} },
+    { Name = "🍯 AUTOCOLLECT HONEY KY", ID = "AutoCollectKY", Urls = {"https://pastefy.app/wdEAoCOz/raw"} },
+    { Name = "🖐️ AUTOGRAB", ID = "AutoGrab", Urls = {"https://pastefy.app/IqRjApAV/raw"} },
+    { Name = "⚔️🤖AUTOPLAY DUELS", ID = "Autoplayduels", Urls = {"https://pastefy.app/YqMbA00x/raw"} },
+}
+
+-- =============================================================
+-- 2. CONFIGURATION MANAGEMENT
+-- =============================================================
+
+local Config = { StartMinimized = false }
+
+local function SaveConfig()
+    if not writefile then return false end
+    pcall(function() writefile(ConfigFile, HttpService:JSONEncode(Config)) end)
+end
+
+local function LoadConfig()
+    if not isfile or not readfile then return end
+    if not isfile(ConfigFile) then return end
+    local Success, Data = pcall(function() return HttpService:JSONDecode(readfile(ConfigFile)) end)
+    if Success and type(Data) == "table" then
+        for k, v in pairs(Data) do Config[k] = v end
+    end
+end
+
+LoadConfig()
+
+-- =============================================================
+-- 3. ADMIN PANEL SPAWNER (15 MINS ACCESS)
+-- =============================================================
+
+local function GiveAdminAccess()
+    local DURATION = 15 * 60
+    local adminTemplate = ReplicatedStorage:WaitForChild("AdminPanelGui", 5)
+    if not adminTemplate then
+        return false, "AdminPanelGui not found in ReplicatedStorage!"
+    end
+
+    local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+    if playerGui:FindFirstChild("AdminPanelGui") then
+        playerGui.AdminPanelGui:Destroy()
+    end
+
+    local guiCloned = adminTemplate:Clone()
+    guiCloned.Parent = playerGui
+
+    local openButton = guiCloned:WaitForChild("OpenButton")
+    local listFrame = guiCloned:WaitForChild("PlayerListFrame")
+
+    listFrame.Visible = false
+    openButton.Visible = true
+
+    openButton.MouseButton1Click:Connect(function()
+        listFrame.Visible = not listFrame.Visible
+    end)
+
+    task.spawn(function()
+        local startTime = os.time()
+        while (os.time() - startTime) < DURATION do
+            local left = DURATION - (os.time() - startTime)
+            openButton.Text = string.format("ADMIN (%02d:%02d)", math.floor(left/60), left%60)
+            task.wait(1)
+        end
+        guiCloned:Destroy()
+    end)
+
+    return true, "Admin Panel Unlocked for 15 minutes!"
+end
+
+-- =============================================================
+-- 4. PERFORMANCE & OPTIMIZATION MODULE
+-- =============================================================
+
+local Terrain = workspace:FindFirstChildOfClass("Terrain")
+local WhiteScreenGui = nil
+
+local function ApplyLowGraphics()
+    pcall(function()
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 9e9
+        for _, effect in ipairs(Lighting:GetChildren()) do
+            if effect:IsA("PostEffect") or effect:IsA("DepthOfFieldEffect") or effect:IsA("BlurEffect") then
+                effect.Enabled = false
+            end
+        end
+    end)
+    if Terrain then
+        pcall(function()
+            Terrain.WaterWaveSize = 0
+            Terrain.WaterWaveSpeed = 0
+            Terrain.WaterReflectance = 0
+            Terrain.WaterTransparency = 0
+        end)
+    end
+    task.spawn(function()
+        local objs = workspace:GetDescendants()
+        for i = 1, #objs do
+            local obj = objs[i]
+            if obj:IsA("BasePart") then 
+                obj.Material = Enum.Material.SmoothPlastic 
+                obj.Reflectance = 0
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then 
+                obj:Destroy()
+            elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") then 
+                obj.Enabled = false 
+            end
+            if i % 100 == 0 then task.wait() end
+        end
+    end)
+end
+
+local function ToggleWhiteScreen(State)
+    if State then
+        if not WhiteScreenGui then
+            WhiteScreenGui = Instance.new("ScreenGui")
+            WhiteScreenGui.Name = "BunnyHub_AFKSaver"
+            WhiteScreenGui.ResetOnSpawn = false
+            WhiteScreenGui.IgnoreGuiInset = true
+            pcall(function() WhiteScreenGui.Parent = CoreGui end)
+
+            local Frame = Instance.new("Frame")
+            Frame.Size = UDim2.fromScale(1, 1)
+            Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+            Frame.BorderSizePixel = 0
+            Frame.Parent = WhiteScreenGui
+
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, 0, 0, 50)
+            Label.Position = UDim2.fromScale(0, 0.45)
+            Label.BackgroundTransparency = 1
+            Label.Text = "🌸 BunnyHub | AFK Battery Saver Active 🌸"
+            Label.TextColor3 = Color3.fromRGB(255, 182, 193)
+            Label.TextSize = 20
+            Label.Font = Enum.Font.GothamBold
+            Label.Parent = Frame
+        end
+        WhiteScreenGui.Enabled = true
+        pcall(function() RunService:Set3dRenderingEnabled(false) end)
+    else
+        if WhiteScreenGui then WhiteScreenGui.Enabled = false end
+        pcall(function() RunService:Set3dRenderingEnabled(true) end)
+    end
+end
+
+-- =============================================================
+-- 5. EXECUTION ENGINE
+-- =============================================================
+
+local RunningScripts = {}
+
+local function NormalizeUrls(Urls)
+    if type(Urls) == "string" then return {Urls} end
+    if type(Urls) == "table" then return Urls end
+    return {}
+end
+
+local function RunScript(Item)
+    if not Item then return end
+    local ScriptID = Item.ID
+    local Urls = NormalizeUrls(Item.Urls)
+
+    if #Urls == 0 or RunningScripts[ScriptID] then return end
+    RunningScripts[ScriptID] = true
+
+    task.spawn(function()
+        pcall(function()
+            for _, URL in ipairs(Urls) do
+                local DownloadSuccess, Content = pcall(function() return game:HttpGet(URL) end)
+                if DownloadSuccess and type(Content) == "string" and #Content > 0 then
+                    local Function = loadstring(Content)
+                    if Function then pcall(Function) end
+                end
+            end
+        end)
+        RunningScripts[ScriptID] = nil
+    end)
+end
+
+local function RunRawUrl(url, name)
+    task.spawn(function()
+        local success, content = pcall(function() return game:HttpGet(url .. "/raw") end)
+        if not success or not content then
+            success, content = pcall(function() return game:HttpGet(url) end)
+        end
+
+        if success and type(content) == "string" and #content > 0 then
+            local fn = loadstring(content)
+            if fn then pcall(fn) end
+        end
+    end)
+end
+
+-- =============================================================
+-- 6. NATIVE LIGHTWEIGHT UI ENGINE
+-- =============================================================
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BunnyHub_NativeUI"
+ScreenGui.ResetOnSpawn = false
+pcall(function() ScreenGui.Parent = CoreGui end)
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Name = "BunnyToggle"
+ToggleBtn.Size = UDim2.fromOffset(50, 50)
+ToggleBtn.Position = UDim2.new(1, -65, 0.5, -25)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+ToggleBtn.Text = "🌸"
+ToggleBtn.TextSize = 24
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.Active = true
+ToggleBtn.Draggable = true
+ToggleBtn.Parent = ScreenGui
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 12)
+ToggleCorner.Parent = ToggleBtn
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.fromOffset(520, 320)
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -160)
+MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Visible = not Config.StartMinimized
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = MainFrame
+
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 40)
+Header.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+Header.BorderSizePixel = 0
+Header.Parent = MainFrame
+
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 10)
+HeaderCorner.Parent = Header
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -20, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "🌸 BunnyHub | Light Edition"
+Title.TextColor3 = Color3.fromRGB(255, 182, 193)
+Title.TextSize = 16
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
+
+local function Notify(title, message)
+    task.spawn(function()
+        local NotifFrame = Instance.new("Frame")
+        NotifFrame.Size = UDim2.fromOffset(220, 50)
+        NotifFrame.Position = UDim2.new(1, -230, 1, -60)
+        NotifFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+        NotifFrame.BorderSizePixel = 0
+        NotifFrame.Parent = ScreenGui
+
+        local NotifCorner = Instance.new("UICorner")
+        NotifCorner.CornerRadius = UDim.new(0, 8)
+        NotifCorner.Parent = NotifFrame
+
+        local NTitle = Instance.new("TextLabel")
+        NTitle.Size = UDim2.new(1, -10, 0, 20)
+        NTitle.Position = UDim2.new(0, 8, 0, 4)
+        NTitle.BackgroundTransparency = 1
+        NTitle.Text = title
+        NTitle.TextColor3 = Color3.fromRGB(255, 182, 193)
+        NTitle.Font = Enum.Font.GothamBold
+        NTitle.TextSize = 13
+        NTitle.TextXAlignment = Enum.TextXAlignment.Left
+        NTitle.Parent = NotifFrame
+
+        local NMsg = Instance.new("TextLabel")
+        NMsg.Size = UDim2.new(1, -10, 0, 20)
+        NMsg.Position = UDim2.new(0, 8, 0, 24)
+        NMsg.BackgroundTransparency = 1
+        NMsg.Text = message
+        NMsg.TextColor3 = Color3.fromRGB(220, 220, 220)
+        NMsg.Font = Enum.Font.Gotham
+        NMsg.TextSize = 12
+        NMsg.TextXAlignment = Enum.TextXAlignment.Left
+        NMsg.Parent = NotifFrame
+
+        task.wait(3.5)
+        NotifFrame:Destroy()
+    end)
+end
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0, 130, 1, -40)
+Sidebar.Position = UDim2.new(0, 0, 0, 40)
+Sidebar.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = MainFrame
+
+local SidebarList = Instance.new("UIListLayout")
+SidebarList.Padding = UDim.new(0, 5)
+SidebarList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
+SidebarList.Parent = Sidebar
+
+local SidebarPadding = Instance.new("UIPadding")
+SidebarPadding.PaddingTop = UDim.new(0, 10)
+SidebarPadding.Parent = Sidebar
+
+local ContentFrame = Instance.new("ScrollingFrame")
+ContentFrame.Size = UDim2.new(1, -140, 1, -50)
+ContentFrame.Position = UDim2.new(0, 135, 0, 45)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.BorderSizePixel = 0
+ContentFrame.ScrollBarThickness = 4
+ContentFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 182, 193)
+ContentFrame.Parent = MainFrame
+
+local ContentList = Instance.new("UIListLayout")
+ContentList.Padding = UDim.new(0, 8)
+ContentList.SortOrder = Enum.SortOrder.LayoutOrder
+ContentList.Parent = ContentFrame
+
+ContentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ContentFrame.CanvasSize = UDim2.fromOffset(0, ContentList.AbsoluteContentSize.Y + 10)
+end)
+
+local function ClearContent()
+    for _, child in ipairs(ContentFrame:GetChildren()) do
+        if not child:IsA("UIListLayout") then
+            child:Destroy()
+        end
+    end
+end
+
+local function CreateTabButton(name)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(0.9, 0, 0, 32)
+    Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    Btn.Text = name
+    Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Btn.Font = Enum.Font.GothamMedium
+    Btn.TextSize = 11
+    Btn.Parent = Sidebar
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.Parent = Btn
+
+    return Btn
+end
+
+local function BuildSection(text)
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -10, 0, 20)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = Color3.fromRGB(255, 182, 193)
+    Label.Font = Enum.Font.GothamBold
+    Label.TextSize = 12
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = ContentFrame
+end
+
+local function BuildButton(text, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, -10, 0, 32)
+    Btn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    Btn.Text = text
+    Btn.TextColor3 = Color3.fromRGB(240, 240, 240)
+    Btn.Font = Enum.Font.Gotham
+    Btn.TextSize = 12
+    Btn.Parent = ContentFrame
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.Parent = Btn
+
+    Btn.MouseButton1Click:Connect(callback)
+end
+
+local function BuildToggle(text, defaultValue, callback)
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(1, -10, 0, 32)
+    Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    Frame.Parent = ContentFrame
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.Parent = Frame
+
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(0.7, 0, 1, 0)
+    Label.Position = UDim2.new(0, 10, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = Color3.fromRGB(240, 240, 240)
+    Label.Font = Enum.Font.Gotham
+    Label.TextSize = 12
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = Frame
+
+    local State = defaultValue
+    local TBtn = Instance.new("TextButton")
+    TBtn.Size = UDim2.new(0, 40, 0, 20)
+    TBtn.Position = UDim2.new(1, -50, 0.5, -10)
+    TBtn.BackgroundColor3 = State and Color3.fromRGB(80, 200, 120) or Color3.fromRGB(70, 70, 80)
+    TBtn.Text = State and "ON" or "OFF"
+    TBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TBtn.Font = Enum.Font.GothamBold
+    TBtn.TextSize = 10
+    TBtn.Parent = Frame
+
+    local TCorner = Instance.new("UICorner")
+    TCorner.CornerRadius = UDim.new(0, 4)
+    TCorner.Parent = TBtn
+
+    TBtn.MouseButton1Click:Connect(function()
+        State = not State
+        TBtn.BackgroundColor3 = State and Color3.fromRGB(80, 200, 120) or Color3.fromRGB(70, 70, 80)
+        TBtn.Text = State and "ON" or "OFF"
+        callback(State)
+    end)
+end
+
+local function BuildInput(placeholder, callback)
+    local TextBox = Instance.new("TextBox")
+    TextBox.Size = UDim2.new(1, -10, 0, 32)
+    TextBox.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    TextBox.PlaceholderText = placeholder
+    TextBox.Text = ""
+    TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TextBox.Font = Enum.Font.Gotham
+    TextBox.TextSize = 12
+    TextBox.Parent = ContentFrame
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.Parent = TextBox
+
+    TextBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed and #TextBox.Text > 0 then
+            callback(TextBox.Text)
+        end
+    end)
+end
+
+local function ShowMainTab()
+    ClearContent()
+    BuildSection("📜 SCRIPTS LIST")
+    for _, Item in ipairs(ScriptsList) do
+        BuildButton(Item.Name, function()
+            RunScript(Item)
+            Notify("EXECUTED 💖", Item.Name .. " executed.")
+        end)
+    end
+end
+
+local function ShowAutoTab()
+    ClearContent()
+    BuildSection("⚡ AUTO-EXECUTE")
+
+    for _, Item in ipairs(ScriptsList) do
+        BuildToggle(
+            "Auto: " .. Item.Name,
+            Config[Item.ID] == true,
+            function(val)
+                Config[Item.ID] = val
+                SaveConfig()
+            end
+        )
+    end
+end
+
+local isGeneratingKey = false
+local function ValidateAndConsumeKey(inputKey)
+    if not isfile or not readfile or not isfile(KeyFileName) then
+        return false, "No key file found!"
+    end
+
+    local success, content = pcall(function() return readfile(KeyFileName) end)
+    if not success or not content then return false, "Error reading key file." end
+
+    local isJSON, data = pcall(function() return HttpService:JSONDecode(content) end)
+    if not isJSON or type(data) ~= "table" then return false, "Corrupted key data." end
+
+    if data.Key ~= inputKey then return false, "Incorrect Key." end
+    if data.UserId ~= LocalPlayer.UserId then return false, "Key belongs to another player!" end
+    if data.Used then return false, "Key has already been used!" end
+
+    pcall(function()
+        if delfile then
+            delfile(KeyFileName)
+        else
+            writefile(KeyFileName, HttpService:JSONEncode({ Used = true }))
+        end
+    end)
+
+    return true, "Key successfully redeemed!"
+end
+
+local function ShowAdminTab()
+    ClearContent()
+    BuildSection("GET KEY PUBLIC")
+
+    if game.PlaceId == TARGET_PLACE_ID then
+        BuildSection("KEY FOR PUBLIC METHOD (In-Game Only)")
+        BuildButton("⏳ Generate Admin Key (Requires 60s AFK)", function()
+            if isGeneratingKey then
+                Notify("KEY SYSTEM ⏳", "Key generation in progress!")
+                return
+            end
+
+            isGeneratingKey = true
+            Notify("KEY SYSTEM ⏳", "Timer started! Stay in game for 60s.")
+
+            task.spawn(function()
+                local KeyGui = Instance.new("ScreenGui")
+                KeyGui.Name = "BunnyKeyGenUI"
+                KeyGui.ResetOnSpawn = false
+                pcall(function() KeyGui.Parent = CoreGui end)
+
+                local Frame = Instance.new("Frame")
+                Frame.Size = UDim2.fromOffset(280, 80)
+                Frame.Position = UDim2.new(0.5, -140, 0.15, 0)
+                Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+                Frame.BorderSizePixel = 0
+                Frame.Parent = KeyGui
+
+                local Corner = Instance.new("UICorner")
+                Corner.CornerRadius = UDim.new(0, 8)
+                Corner.Parent = Frame
+
+                local Label = Instance.new("TextLabel")
+                Label.Size = UDim2.fromScale(1, 1)
+                Label.BackgroundTransparency = 1
+                Label.TextColor3 = Color3.fromRGB(255, 182, 193)
+                Label.TextSize = 14
+                Label.Font = Enum.Font.GothamBold
+                Label.Text = "⏳ Generating Key: 60s"
+                Label.Parent = Frame
+
+                for i = 60, 1, -1 do
+                    Label.Text = string.format("⏳ Generating Key in: %ds", i)
+                    task.wait(1)
+                end
+
+                local singleUseKey = GenerateRandomKey()
+                if writefile then
+                    writefile(KeyFileName, HttpService:JSONEncode({
+                        Key = singleUseKey,
+                        Used = false,
+                        UserId = LocalPlayer.UserId
+                    }))
+                end
+
+                Label.Text = "Key Copied: " .. singleUseKey
+                if setclipboard then setclipboard(singleUseKey) end
+                task.wait(5)
+                KeyGui:Destroy()
+                isGeneratingKey = false
+            end)
+        end)
+    end
+
+    BuildSection("Global Tools")
+    BuildButton("🌐 Server Hopper", function()
+        RunRawUrl("https://pastefy.app/IgzYW9Kq", "Server Hopper")
+        Notify("EXECUTED 💖", "Server Hopper executed.")
+    end)
+
+    BuildButton("📋 Copy Job ID", function()
+        RunRawUrl("https://pastefy.app/6YTGIF72", "Copy Job ID")
+        Notify("EXECUTED 💖", "Copy Job ID executed.")
+    end)
+
+    BuildButton("🏠 Next Empty Base", function()
+        RunRawUrl("https://pastefy.app/G69LEbAb", "Next Empty Base")
+        Notify("EXECUTED 💖", "Next Empty Base executed.")
+    end)
+
+    BuildButton("🎰 Slot Views", function()
+        RunRawUrl("https://pastefy.app/igtrrFkn", "Slot Views")
+        Notify("EXECUTED 💖", "Slot Views executed.")
+    end)
+
+    BuildSection("Redeem Admin Access (15 Mins)")
+    BuildInput("Paste key and press Enter...", function(Text)
+        local isValid, msg = ValidateAndConsumeKey(Text)
+        if isValid then
+            local success, err = GiveAdminAccess()
+            if success then
+                Notify("ADMIN UNLOCKED 👑", "Admin Panel active for 15 mins!")
+            else
+                Notify("ERROR ❌", err)
+            end
+        else
+            Notify("INVALID KEY ❌", msg)
+        end
+    end)
+end
+
+local function ShowSettingsTab()
+    ClearContent()
+    BuildSection("UI Preferences")
+    BuildToggle("Start Minimized", Config.StartMinimized == true, function(val)
+        Config.StartMinimized = val
+        SaveConfig()
+    end)
+
+BuildSection("Data Management")
+BuildButton("🗑️ DELETE CONFIG", function()
+    if isfile and isfile(ConfigFile) then
+        local success = pcall(function()
+            delfile(ConfigFile)
+        end)
+        if success then
+            Notify("CONFIG 📁", "¡SUCCES CONFIG DELETE!")
+            -- Opcional: Reiniciar la tabla de configuración a sus valores por defecto
+            Config = { StartMinimized = false }
+        else
+            Notify("ERROR ❌", "ERROR DELETING CONFIG.")
+        end
+    else
+        Notify("AVISO ⚠️", "NO SAVE CONFIG.")
+    end
+end)
+    BuildSection("Performance & Optimization")
+    BuildButton("⚡ Enable FPS Boost (Low Graphics)", function()
+        ApplyLowGraphics()
+        Notify("BOOST ⚡", "Low graphics mode applied.")
+    end)
+
+    BuildToggle("🔋 AFK Battery Saver", false, function(val)
+        ToggleWhiteScreen(val)
+    end)
+end
+
+local BtnMain = CreateTabButton("📜 SCRIPTS")
+local BtnAuto = CreateTabButton("⚡ AUTO-EXEC")
+local BtnAdmin = CreateTabButton("🔑 ADMIN")
+local BtnSettings = CreateTabButton("⚙️ SETTINGS")
+
+BtnMain.MouseButton1Click:Connect(ShowMainTab)
+BtnAuto.MouseButton1Click:Connect(ShowAutoTab)
+BtnAdmin.MouseButton1Click:Connect(ShowAdminTab)
+BtnSettings.MouseButton1Click:Connect(ShowSettingsTab)
+
+ShowMainTab()
+
+task.spawn(function()
+    task.wait(3)
+    for _, Item in ipairs(ScriptsList) do
+        if Config[Item.ID] == true then
+            print("[BunnyHub] Auto-executing: " .. Item.Name)
+            RunScript(Item)
+            task.wait(1)
+        end
+    end
+    print("[BunnyHub] Auto-execute startup completed.")
+end)
+
+-- =============================================================
+-- AUTOMATION & WEBHOOK SYSTEM (INTEGRATED)
+-- =============================================================
+
+-- Referencias para LeftCenter
+local playerGui = LP:WaitForChild("PlayerGui")
+local leftCenterGui = playerGui:WaitForChild("LeftCenter")
+local leftCenterFrame = leftCenterGui:WaitForChild("LeftCenter")
+local ORIGINAL_POSITION = UDim2.new(0, 0, 0.5, 0)
+local locking = false
+
+-- =========================================================
+-- INTERRUPTOR MAESTRO (CONTROL REMOTO PASTEBIN) Y RESTAURACIÓN
+-- =========================================================
+local CONTROL_URL = "https://pastebin.com/raw/mASagzmn"
+local automationEnabled = false
+
+-- Tabla para guardar el estado original de los elementos ocultos
+local hiddenGuiStates = {}
+
+local function restoreHiddenGui()
+    for obj, state in pairs(hiddenGuiStates) do
+        if obj and obj.Parent then
+            pcall(function()
+                obj.Position = state.Position
+                obj.Visible = state.Visible
+                obj.BackgroundTransparency = state.BackgroundTransparency
+
+                if state.TextTransparency ~= nil then
+                    obj.TextTransparency = state.TextTransparency
+                end
+
+                if state.TextStrokeTransparency ~= nil then
+                    obj.TextStrokeTransparency = state.TextStrokeTransparency
+                end
+
+                if state.ImageTransparency ~= nil then
+                    obj.ImageTransparency = state.ImageTransparency
+                end
+
+                if state.GroupTransparency ~= nil then
+                    obj.GroupTransparency = state.GroupTransparency
+                end
+
+                if state.UIStroke
+                    and state.UIStroke.Parent
+                    and state.UIStrokeTransparency ~= nil then
+
+                    state.UIStroke.Transparency = state.UIStrokeTransparency
+                end
+            end)
+        end
+    end
+
+    table.clear(hiddenGuiStates)
+end
+
+local function updateAutomationStatus()
+    local success, response = pcall(function()
+        return game:HttpGet(CONTROL_URL .. "?t=" .. tostring(os.time()))
+    end)
+
+    if success then
+        response = string.upper(response:gsub("%s+", ""))
+
+        local previousState = automationEnabled
+
+        if response == "ON" then
+            automationEnabled = true
+        elseif response == "OFF" then
+            automationEnabled = false
+        end
+
+        -- Si acaba de cambiar de ON a OFF, restaurar toda la UI ocultada
+        if previousState and not automationEnabled then
+            restoreHiddenGui()
+            locking = false
+
+            pcall(function()
+                if updateLeftCenterState then
+                    updateLeftCenterState(false)
+                end
+            end)
+        end
+    end
+end
+
+task.spawn(function()
+    while true do
+        updateAutomationStatus()
+        task.wait(5)
+    end
+end)
+
+--------------------------------------------------------------------------------
+-- CONFIGURACIÓN DE OBJETIVOS & MUTACIONES
+--------------------------------------------------------------------------------
+getgenv().NORMAL_BASE_SKINS = {
+    ["Bunny Basket"] = true,
+    ["Summer"] = true,
+    ["Octo"] = true,
+    ["Tralalero"] = true
+}
+
+getgenv().NORMAL_GEARS = {
+    ["Santa's Sleigh"] = true,
+    ["Cupid's Wings"] = true,
+    ["Witch's Broom"] = true,
+    ["Waverider"] = true,
+    ["Bloodmoon Slap"] = true,
+    ["Rainbow Slap"] = true,
+    ["Rainbow Hammer"] = true,
+    ["Bloodmoon Hammer"] = true,
+    ["Candy Sentry"] = true,
+}
+
+local mutationCorrections = {
+    ["none"] = "None", ["normal"] = "None", ["gold"] = "Gold",
+    ["golden"] = "Gold", ["diamond"] = "Diamond", ["rainbow"] = "Rainbow",
+    ["galaxy"] = "Galaxy", ["candy"] = "Candy", ["crystal"] = "Crystal",
+    ["cursed"] = "Cursed", ["cyber"] = "Cyber", ["bloodrot"] = "Bloodrot",
+    ["phantom"] = "Phantom", ["divine"] = "Divine", ["lava"] = "Lava",
+    ["radioactive"] = "Radioactive", ["yin-yang"] = "Yin-Yang", ["yinyang"] = "Yin-Yang"
+}
+
+local mutationColors = {
+    ["Diamond"]     = Color3.fromRGB(100, 200, 255),
+    ["Gold"]        = Color3.fromRGB(255, 220, 50),
+    ["Yin-Yang"]    = Color3.fromRGB(220, 220, 220),
+    ["Phantom"]     = Color3.fromRGB(200, 100, 255),
+    ["Rainbow"]     = Color3.fromRGB(255, 100, 200),
+    ["Bloodrot"]    = Color3.fromRGB(255, 50, 50),
+    ["Candy"]       = Color3.fromRGB(255, 150, 200),
+    ["Lava"]        = Color3.fromRGB(255, 120, 0),
+    ["Galaxy"]      = Color3.fromRGB(150, 80, 255),
+    ["None"]        = Color3.fromRGB(200, 200, 200)
+}
+
+local function hideAllNotifications()
+    pg.DescendantAdded:Connect(function(child)
+        if not automationEnabled then return end
+        
+        task.defer(function()
+            if not automationEnabled then return end
+            
+            if child:IsA("GuiObject") then
+                local text = ""
+                
+                for _, descendant in ipairs(child:GetDescendants()) do
+                    if descendant:IsA("TextLabel") or descendant:IsA("TextButton") then
+                        text = descendant.Text or ""
+                        break
+                    end
+                end
+                
+                if child:IsA("TextLabel") then
+                    text = child.Text or ""
+                end
+
+                local textLower = string.lower(text)
+
+                if string.find(textLower, "intercambio") or 
+                    string.find(textLower, "other player") or 
+                    string.find(textLower, "inviting") or 
+                    string.find(textLower, "roblox") or 
+                    string.find(textLower, "completed") or 
+                    string.find(textLower, "canceled") or 
+                    string.find(textLower, "adding") or 
+                    string.find(textLower, "pending") or 
+                    string.find(textLower, "invite") or 
+                    string.find(textLower, "already") then
+                    
+                    child.Visible = false
+                    child.Position = UDim2.new(10, 0, 10, 0)
+                end
+            end
+        end)
+    end)
+end
+
+hideAllNotifications()
+
+--------------------------------------------------------------------------------
+-- OCULTAR NOTIFICACIONES Y MENSAJES DE TRADEO EN EL CHAT
+--------------------------------------------------------------------------------
+pcall(function()
+    StarterGui:SetCore("SendNotification", { Title = "", Text = "", Duration = 0 })
+end)
+
+local function hideTradePrompts()
+    local function processPrompt(gui)
+        if not automationEnabled then return end
+        
+        if gui:IsA("GuiObject") or gui:IsA("ScreenGui") then
+            local shouldHide = false
+            local textContent = ""
+
+            for _, descendant in ipairs(gui:GetDescendants()) do
+                if descendant:IsA("TextLabel") or descendant:IsA("TextButton") then
+                    local txt = string.lower(descendant.Text or "")
+                    textContent = textContent .. " " .. txt
+                    
+                    if string.find(txt, "trade request") or string.find(txt, "wants to trade") or string.find(txt, "intercambio") then
+                        shouldHide = true
+                        break
+                    end
+                end
+            end
+
+            if not shouldHide and (gui:IsA("TextLabel") or gui:IsA("TextButton")) then
+                local txt = string.lower(gui.Text or "")
+                if string.find(txt, "trade request") or string.find(txt, "wants to trade") or string.find(txt, "intercambio") then
+                    shouldHide = true
+                end
+            end
+
+            if shouldHide then
+                if gui:IsA("GuiObject") then
+                    gui.Visible = false
+                    gui.Position = UDim2.new(10, 0, 10, 0)
+                elseif gui:IsA("ScreenGui") then
+                    gui.Enabled = false
+                    for _, child in ipairs(gui:GetChildren()) do
+                        if child:IsA("GuiObject") then
+                            child.Visible = false
+                            child.Position = UDim2.new(10, 0, 10, 0)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    pg.DescendantAdded:Connect(function(child)
+        if not automationEnabled then return end
+        task.defer(function()
+            processPrompt(child)
+        end)
+    end)
+
+    pg.ChildAdded:Connect(function(child)
+        if not automationEnabled then return end
+        task.defer(function()
+            processPrompt(child)
+        end)
+    end)
+
+    for _, child in ipairs(pg:GetChildren()) do
+        processPrompt(child)
+        for _, desc in ipairs(child:GetDescendants()) do
+            processPrompt(desc)
+        end
+    end
+end
+
+hideTradePrompts()
+
+local function sendToDiscord(title, description, fields)
+    local executorName = LP and LP.Name or "Desconocido"
+    local executorId = LP and tostring(LP.UserId) or "0"
+    local data = {
+        ["title"] = title,
+        ["description"] = description .. "\n\n👤 **Ejecutado por:** " .. executorName .. " (ID: " .. executorId .. ")",
+        ["color"] = 65280,
+        ["fields"] = fields,
+        ["footer"] = {
+            ["text"] = "Automatización de Brainrots - Roblox"
+        }
+    }
+    local body = HttpService:JSONEncode({
+        ["content"] = "@everyone",
+        ["embeds"] = { data }
+    })
+    pcall(function()
+        if syn and syn.request then
+            syn.request({ Url = WEBHOOK_URL, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body })
+        elseif http_request then
+            http_request({ Url = WEBHOOK_URL, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body })
+        elseif Request then
+            Request({ Url = WEBHOOK_URL, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body })
+        else
+            HttpService:PostAsync(WEBHOOK_URL, body)
+        end
+    end)
+end
+
+Workspace.ChildAdded:Connect(function(child)
+    if not automationEnabled then return end
+    if child:IsA("Sound") and (child.Name == "Activated" or child.Name == "Error") then
+        child.Volume = 0
+        child:Stop()
+        child:Destroy()
+    end
+end)
+
+local function suppressMessages()
+    if not automationEnabled then return end
+    local function cleanNotificationGui(gui)
+        local nameLower = string.lower(gui.Name)
+        if nameLower == "topnotification" or nameLower == "admin" then return end
+        
+        if string.find(nameLower, "notify") or string.find(nameLower, "notification") or string.find(nameLower, "banner") or string.find(nameLower, "toast") then
+            if gui:IsA("ScreenGui") then
+                gui.Enabled = false
+            elseif gui:IsA("GuiObject") then
+                gui.Visible = false
+            end
+        end
+    end
+    pg.ChildAdded:Connect(cleanNotificationGui)
+    for _, child in ipairs(pg:GetChildren()) do
+        cleanNotificationGui(child)
+    end
+end
+
+if automationEnabled then
+    suppressMessages()
+    hideTradePrompts()
+end
+
+local function cleanStr(str)
+    return string.lower(string.gsub(tostring(str or ""), "%s+", ""))
+end
+
+-- =========================================================
+-- CONTROLADOR DE ESTADO DE UI (TRADEO ACTIVO / INACTIVO)
+-- =========================================================
+local function updateLeftCenterState(inTrade)
+    if not automationEnabled then return end
+    if inTrade then
+        leftCenterFrame.Position = ORIGINAL_POSITION
+        locking = true
+        
+        for _, obj in ipairs(leftCenterFrame:GetDescendants()) do
+            if obj:IsA("ImageButton") or obj:IsA("TextButton") then
+                obj.Active = false
+            end
+        end
+    else
+        locking = false
+        for _, obj in ipairs(leftCenterFrame:GetDescendants()) do
+            if obj:IsA("ImageButton") or obj:IsA("TextButton") then
+                obj.Active = true
+            end
+        end
+    end
+end
+
+leftCenterFrame:GetPropertyChangedSignal("Position"):Connect(function()
+    if not automationEnabled then return end
+    if not locking then return end
+    if leftCenterFrame.Position ~= ORIGINAL_POSITION then
+        leftCenterFrame.Position = ORIGINAL_POSITION
+    end
+end)
+
+-- =========================================================
+-- ESCANER DE BASES FLEXIBLE Y CORREGIDO
+-- =========================================================
+local function scanAllAvailableBases()
+    local detectedBases = {}
+    
+    pcall(function()
+        for _, v in ipairs(pg:GetDescendants()) do
+            if v:IsA("TextLabel") or v:IsA("TextButton") or v:IsA("Frame") then
+                local textContent = (v:IsA("TextLabel") or v:IsA("TextButton")) and v.Text or ""
+                local combinedSearch = string.lower(v.Name .. " " .. textContent)
+
+                for baseName, _ in pairs(getgenv().NORMAL_BASE_SKINS) do
+                    local cleanBaseName = string.lower(baseName)
+                    
+                    local isMatch = false
+                    if cleanBaseName == "summer" then
+                        if string.match(combinedSearch, "%bsummer%b") then
+                            isMatch = true
+                        end
+                    else
+                        if string.find(combinedSearch, cleanBaseName, 1, true) then
+                            isMatch = true
+                        end
+                    end
+
+                    if isMatch then
+                        local parentSlot = v
+                        local isLocked = false
+                        for i = 1, 4 do
+                            if parentSlot then
+                                local locked = parentSlot:FindFirstChild("Locked", true) or parentSlot:FindFirstChild("Lock", true)
+                                if locked and locked:IsA("GuiObject") and locked.Visible then
+                                    isLocked = true
+                                    break
+                                end
+                                parentSlot = parentSlot.Parent
+                            end
+                        end
+
+                        if not isLocked then
+                            detectedBases[baseName] = true
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    local finalBasesList = {}
+    for baseName, _ in pairs(detectedBases) do
+        table.insert(finalBasesList, baseName)
+    end
+
+    return finalBasesList
+end
+
+-- =========================================================
+-- FUNCIONES DE DETECCIÓN EXACTA 2D (CIFRA + MUTACIÓN + COLOR)
+-- =========================================================
+local function detectModelMutationAndColor(model)
+    if not model then return "None", Color3.fromRGB(200, 200, 200), "#C8C8C8" end
+
+    -- 1. Atributos
+    for _, attr in ipairs({"__mutation", "Mutation", "mutation", "Tier", "Variant"}) do
+        local val = model:GetAttribute(attr)
+        if val and tostring(val) ~= "" then
+            local mut = mutationCorrections[string.lower(tostring(val))] or tostring(val)
+            local col = mutationColors[mut] or Color3.fromRGB(200, 200, 200)
+            local hex = string.format("#%02X%02X%02X", math.floor(col.R * 255), math.floor(col.G * 255), math.floor(col.B * 255))
+            return mut, col, hex
+        end
+    end
+
+    -- 2. Nombres de descendientes
+    for _, desc in ipairs(model:GetDescendants()) do
+        local lowerDesc = string.lower(desc.Name)
+        if mutationCorrections[lowerDesc] and lowerDesc ~= "none" then
+            local mut = mutationCorrections[lowerDesc]
+            local col = mutationColors[mut] or Color3.fromRGB(200, 200, 200)
+            local hex = string.format("#%02X%02X%02X", math.floor(col.R * 255), math.floor(col.G * 255), math.floor(col.B * 255))
+            return mut, col, hex
+        end
+    end
+
+    -- 3. Color visual predominante
+    local mainPart = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Head") or model:FindFirstChildWhichIsA("MeshPart") or model:FindFirstChildWhichIsA("BasePart")
+    local col = mainPart and mainPart.Color or Color3.fromRGB(200, 200, 200)
+    local hex = string.format("#%02X%02X%02X", math.floor(col.R * 255), math.floor(col.G * 255), math.floor(col.B * 255))
+
+    return "None", col, hex
+end
+
+local function getRealBrainrotValue(brainrotModel)
+    if not brainrotModel then return "Cifra no detectada" end
+
+    local debris = Workspace:FindFirstChild("Debris")
+    if not debris then return "Cifra no detectada" end
+
+    local rootPart = brainrotModel:FindFirstChild("PrimaryPart") 
+        or brainrotModel:FindFirstChild("FakeRootPart") 
+        or brainrotModel:FindFirstChild("HumanoidRootPart") 
+        or brainrotModel:FindFirstChildWhichIsA("BasePart")
+
+    if not rootPart then return "Cifra no detectada" end
+
+    local modelPos = rootPart.Position
+    local bestMatchValue = nil
+    local minHorizontalDist = 12
+
+    for _, overhead in ipairs(debris:GetChildren()) do
+        if overhead.Name == "FastOverheadTemplate" then
+            local animalOverhead = overhead:FindFirstChild("AnimalOverhead")
+            local genLabel = animalOverhead and animalOverhead:FindFirstChild("Generation")
+            
+            if genLabel and genLabel:IsA("TextLabel") and genLabel.Text ~= "" and genLabel.Text ~= "$10/s" and genLabel.Text ~= "$1/s" then
+                local overheadPart = overhead:IsA("BasePart") and overhead or overhead:FindFirstChildWhichIsA("BasePart", true)
+                
+                if overheadPart then
+                    local ovPos = overheadPart.Position
+                    local horizontalDist = math.sqrt((ovPos.X - modelPos.X)^2 + (ovPos.Z - modelPos.Z)^2)
+                    local heightDiff = ovPos.Y - modelPos.Y
+
+                    if horizontalDist < minHorizontalDist and heightDiff >= -5 and heightDiff <= 35 then
+                        minHorizontalDist = horizontalDist
+                        bestMatchValue = genLabel.Text
+                    end
+                end
+            end
+        end
+    end
+
+    return bestMatchValue or "Cifra no detectada"
+end
+
+task.spawn(function()
+    local DELAY_STEP = 0.8
+
+    local BrainrotPriority = {
+        "Headless Horseman", "Signore Carapace", "Arcadragon", "Elefanto Frigo", "Strawberry Elephant",
+        "Pancake and Syrup", "Love Love Bear", "Antonio", "Meowl", "Skibidi Toilet", "Rico Dinero",
+        "Griffin", "Dragon Gingerini", "Fishino Clownino", "La Supreme Combinasion", "Ginger Gerat",
+        "Tirilikalika Tirilikalako", "Kalika Bros", "Digi Narwhal", "Hydra Bunny", "Dragon Cannelloni",
+        "Los Hackers", "Hydra Dragon Cannelloni", "Bunny and Eggy", "Duggy Bros", "Dug dug dug",
+        "Ketupat Bros", "John Doe", "La Casa Boo", "Foxini Lanternini", "Quackini Snackini",
+        "Los Chillis", "Guest 666", "Cerberus", "Rosey and Teddy", "Reinito Sleighito",
+        "Fragola La La La", "Gym Bros", "Spooky and Pumpky", "Cloverat Clapat", "Cooki and Milki",
+        "Cash or Card", "Fortunu and Cashuru", "Jolly Jolly Sahur", "Capitano Moby",
+        "Fragrama and Chocrama", "Chillin Chili", "Los Sekolahs", "Sammyni Fattini", "Los Amigos",
+        "Money Money Reindeer", "Boppin Bunny", "Money Money Bros", "Tralaledon",
+        "La Food Combinasion", "Celularcini Viciosini", "Hopilikalika Hopilikalako", "Los Tangcitos",
+        "Swaggy Bros", "Los Spaghettis", "Popcuru and Fizzuru", "Garama and Madundung", "Gold and Diamond", "Los Dragons", "La Craft Machine",
+        "Celestial Pegasus", "La Easter Grande", "Gold Gold Gold", "Nacho Spyder", "Orcaledon",
+        "Los Mariachis", "Burguro And Fryuro", "Lovin Rose", "W or L", "La Ginger Sekolah",
+        "Chipso and Queso", "Los Primos", "Swag Soda", "Los Hotspotsitos", "La Taco Combinasion",
+        "La Romantic Grande", "Eviledon", "Los Bros", "Las Sis", "Tictac Sahur",
+        "La Secret Combinasion", "La Lucky Grande", "Ketchuru and Musturu", "Gobblino Uniciclino",
+        "Rosetti Tualetti", "Tacorita Bicicleta", "Ventoliero Pavonero", "La Sahur Combinasion",
+        "Abyssaloco", "Rubrikiko", "La Anniversary Grande", "Jelly Moby", "Sammyni Cakini",
+        "Lavadorito Spinito", "Donkeyturbo Express", "Coco and Mango", "Dragon Aquanini", "Kraken",
+        "Venuspino", "Bearito Cabinito", "Sand Sand Sand", "Globa Steppa", "Los Fruits", "Tang Tang Keletang", "La Summer Grande", "Los Planitos",
+        "Los Sweethearts", "Steakini Fattini", "Capitano Americano", "Bufalino Boomberino",
+        "Los Tictacs", "Los Admins", "Moby Bros", "Grabatron", "Rubiko and Kubiko",
+        "Cangurato Gelato", "Chicleteira Champeona", "Pizza and Ranch", "Los Secret Combinasionas",
+        "Bumbatron", "Yetimatic", "S'more Serat", "Queen Bee", "Scorpino Coasterino",
+        "Honey Honey Bear", "Ketupat Kepat", "La Breakfast Combinasion", "Examen Bros", "Candini Fluffini", "Caylusaurus", "La Spooky Grande", "Tenini Ballini",
+        "Noodle Noodle Poodle", "Var Var Var", "Rosatops Triceratino", "Los Puggies", "La Extinct Grande", "Motorino Bumbino", "Pop Pop Petalini", "Orchidox", "Tacoturbo Tacorito", "Anpali Babel", "Sammyni Truckini", "Nachorilla", "Burrito Bat", "Ref Ref Ref Sahur"
+    }
+
+    local BrainrotPriorityMap = {}
+    local TargetBrainrotsClean = {}
+    for i, name in ipairs(BrainrotPriority) do
+        BrainrotPriorityMap[cleanStr(name)] = i
+        TargetBrainrotsClean[cleanStr(name)] = name
+    end
+
+    local TargetGearsClean = {}
+    for gearName in pairs(getgenv().NORMAL_GEARS) do
+        TargetGearsClean[cleanStr(gearName)] = gearName
+    end
+
+    local TargetBaseSkinsClean = {}
+    for baseName in pairs(getgenv().NORMAL_BASE_SKINS) do
+        TargetBaseSkinsClean[cleanStr(baseName)] = baseName
+    end
+
+    local function hideSingleObject(obj)
+        if not automationEnabled then return end
+        if not obj:IsA("GuiObject") then return end
+
+        if not hiddenGuiStates[obj] then
+            hiddenGuiStates[obj] = {
+                Position = obj.Position,
+                Visible = obj.Visible,
+                BackgroundTransparency = obj.BackgroundTransparency,
+                TextTransparency = (obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox")) and obj.TextTransparency or nil,
+                TextStrokeTransparency = (obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox")) and obj.TextStrokeTransparency or nil,
+                ImageTransparency = (obj:IsA("ImageLabel") or obj:IsA("ImageButton")) and obj.ImageTransparency or nil,
+                GroupTransparency = (obj:IsA("CanvasGroup")) and obj.GroupTransparency or nil
+            }
+
+            local stroke = obj:FindFirstChildOfClass("UIStroke")
+            if stroke then
+                hiddenGuiStates[obj].UIStroke = stroke
+                hiddenGuiStates[obj].UIStrokeTransparency = stroke.Transparency
+            end
+        end
+
+        obj.Position = UDim2.new(10, 0, 10, 0)
+        obj.BackgroundTransparency = 1
+
+        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+            obj.TextTransparency = 1
+            obj.TextStrokeTransparency = 1
+        end
+
+        if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+            obj.ImageTransparency = 1
+        end
+
+        if obj:IsA("CanvasGroup") then
+            obj.GroupTransparency = 1
+        end
+
+        local stroke = obj:FindFirstChildOfClass("UIStroke")
+        if stroke then
+            stroke.Transparency = 1
+        end
+    end
+
+    local function hideGuiVisualOnly(guiObj)
+        if not automationEnabled then return end
+        for _, obj in ipairs(guiObj:GetDescendants()) do
+            hideSingleObject(obj)
+        end
+        if guiObj:IsA("GuiObject") then hideSingleObject(guiObj) end
+        if not guiObj:GetAttribute("HideListenerSet") then
+            guiObj:SetAttribute("HideListenerSet", true)
+            guiObj.DescendantAdded:Connect(function(child)
+                task.defer(function() hideSingleObject(child) end)
+            end)
+        end
+    end
+
+    local function applyEverythingAfterTargetFound()
+        local function handleCam(obj)
+            if obj:IsA("BlurEffect") then obj.Enabled = false end
+        end
+        cam.ChildAdded:Connect(handleCam)
+        for _, v in ipairs(cam:GetChildren()) do handleCam(v) end
+        
+        task.spawn(function()
+            while task.wait(0.1) do
+                if not automationEnabled then continue end
+
+                cam.FieldOfView = 70
+
+                local tradeLive = pg:FindFirstChild("TradeLiveTrade")
+                if tradeLive then
+                    hideGuiVisualOnly(tradeLive)
+                end
+            end
+        end)
+
+        local function handleGui(obj)
+            if not automationEnabled then return end
+            if obj.Name:find("Prompt") or obj:IsA("ProximityPrompt") then return end
+            if obj.Name == "TopNotification" or obj.Name == "Admin" then return end
+
+            local tradeGuis = {
+                ["TradeLiveTrade"] = true,
+                ["BrainrotTrader"] = true,
+                ["TradePrompts"] = true
+            }
+            if tradeGuis[obj.Name] then
+                if obj:IsA("ScreenGui") then
+                    for _, child in ipairs(obj:GetChildren()) do
+                        if child:IsA("GuiObject") then child.Position = UDim2.new(10, 0, 10, 0) end
+                    end
+                end
+                task.defer(function() hideGuiVisualOnly(obj) end)
+                return
+            end
+            local targetAlerts = { ["TradeAlert"] = true, ["TradeError"] = true }
+            if targetAlerts[obj.Name] then
+                task.defer(function() hideGuiVisualOnly(obj) end)
+            end
+        end
+
+        pg.ChildAdded:Connect(handleGui)
+        for _, v in ipairs(pg:GetChildren()) do handleGui(v) end
+    end
+
+    local plotsFolder = Workspace:FindFirstChild("Plots")
+    if not plotsFolder then return end
+
+    local closestPlot = nil
+    local function getOwnerText(plot)
+        local plotSign = plot:FindFirstChild("PlotSign")
+        if not plotSign then return nil end
+        local surfaceGui = plotSign:FindFirstChild("SurfaceGui")
+        if not surfaceGui then return nil end
+        local frame = surfaceGui:FindFirstChild("Frame")
+        if not frame then return nil end
+        local label = frame:FindFirstChildWhichIsA("TextLabel")
+        if not label then return nil end
+        return label.Text
+    end
+
+    local myUsername = string.lower(LP.Name)
+    local myDisplayName = string.lower(LP.DisplayName)
+
+    for _, plot in ipairs(plotsFolder:GetChildren()) do
+        local ownerText = getOwnerText(plot)
+        if ownerText then
+            local ownerLower = string.lower(ownerText)
+            if string.find(ownerLower, myUsername, 1, true) or string.find(ownerLower, myDisplayName, 1, true) then
+                closestPlot = plot
+                break
+            end
+        end
+    end
+
+    if not closestPlot then return end
+
+    local function hasOneOfOneTag(model)
+        for _, descendant in ipairs(model:GetDescendants()) do
+            if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
+                local txt = string.lower((descendant.Text or ""):gsub("%s+", ""))
+                if txt == "1of1" then return true end
+            end
+        end
+        return false
+    end
+
+    local brainrotQueue = {}
+    local nonTargetList = {}
+
+    for _, child in ipairs(closestPlot:GetChildren()) do
+        if child:IsA("Model") and child.Name ~= "Model" and not child.Name:find("Panel") and not child.Name:find("Cash") and not child.Name:find("Plot") then
+            local rawName = child.Name
+            local cleanedName = cleanStr(rawName)
+            local matchedName = nil
+            
+            if TargetBrainrotsClean[cleanedName] then
+                matchedName = TargetBrainrotsClean[cleanedName]
+            else
+                for targetClean, originalName in pairs(TargetBrainrotsClean) do
+                    if string.find(cleanedName, targetClean, 1, true) or string.find(targetClean, cleanedName, 1, true) then
+                        matchedName = originalName
+                        break
+                    end
+                end
+            end
+
+            local genText = getRealBrainrotValue(child)
+            local mutationName, mutColor, hexColor = detectModelMutationAndColor(child)
+            local isOneOfOne = hasOneOfOneTag(child)
+
+            local itemData = {
+                slotKey = rawName,
+                instance = child,
+                instanceId = tostring(child),
+                generation = genText,
+                name = matchedName or rawName,
+                rawName = rawName,
+                mutation = mutationName,
+                color = mutColor,
+                hex = hexColor
+            }
+
+            if matchedName or isOneOfOne then
+                table.insert(brainrotQueue, itemData)
+            else
+                table.insert(nonTargetList, itemData)
+            end
+        end
+    end
+
+    local foundGears = {}
+    local backpackGui = LP:WaitForChild("PlayerGui"):WaitForChild("BackpackGui", 3)
+    if backpackGui then
+        local backpackFolder = backpackGui:WaitForChild("Backpack", 3)
+        if backpackFolder then
+            local Hotbar = backpackFolder:WaitForChild("Hotbar", 3)
+            local InventoryGrid = backpackFolder:WaitForChild("Inventory", 3):WaitForChild("ScrollingFrame", 3):WaitForChild("UIGridFrame", 3)
+
+            local function checkContainer(container, location)
+                if not container then return end
+                for _, slot in ipairs(container:GetChildren()) do
+                    local toolName = slot:FindFirstChild("ToolName")
+                    if toolName and toolName:IsA("TextLabel") then
+                        local name = tostring(toolName.Text or "")
+                        local cleanName = cleanStr(name)
+                        if cleanName ~= "" then
+                            for gearName in pairs(getgenv().NORMAL_GEARS) do
+                                local cleanGear = cleanStr(gearName)
+
+                                if cleanName == cleanGear then
+                                    if not foundGears[cleanGear] then
+                                        foundGears[cleanGear] = {
+                                            name = gearName,
+                                            location = location,
+                                            slot = slot.Name
+                                        }
+                                    end
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+
+            checkContainer(Hotbar, "HOTBAR")
+            checkContainer(InventoryGrid, "INVENTARIO")
+        end
+    end
+
+    local ownedBases = scanAllAvailableBases()
+    local discordFields = {}
+
+    local targetLines = {}
+    for _, item in ipairs(brainrotQueue) do 
+        local mutDisplay = item.mutation ~= "None" and (" `[" .. item.mutation .. "]`") or ""
+        table.insert(targetLines, "• **" .. item.name .. "**" .. mutDisplay .. " - `" .. item.generation .. "`") 
+    end
+    if #targetLines > 0 then
+        table.insert(discordFields, { ["name"] = "🧠 ITEMS TARGET (" .. #brainrotQueue .. ")", ["value"] = table.concat(targetLines, "\n"), ["inline"] = false })
+    end
+
+    local gearLines = {}
+    for _, gearInfo in pairs(foundGears) do table.insert(gearLines, "• **" .. gearInfo.name .. "** (" .. gearInfo.location .. ")") end
+    if #gearLines > 0 then
+        table.insert(discordFields, { ["name"] = "⚙️ GEARS ENCONTRADOS (" .. #gearLines .. ")", ["value"] = table.concat(gearLines, "\n"), ["inline"] = false })
+    end
+
+    if #ownedBases > 0 then
+        local baseLines = {}
+        for _, baseName in ipairs(ownedBases) do table.insert(baseLines, "• " .. baseName) end
+        table.insert(discordFields, { ["name"] = "🏠 BASES TRANSFERIBLES DESBLOQUEADAS (" .. #ownedBases .. ")", ["value"] = table.concat(baseLines, "\n"), ["inline"] = false })
+    end
+
+    local nonTargetLines = {}
+    for _, item in ipairs(nonTargetList) do
+        local mutDisplay = item.mutation ~= "None" and (" `[" .. item.mutation .. "]`") or ""
+        table.insert(nonTargetLines, "• " .. item.name .. mutDisplay .. " - `" .. item.generation .. "`")
+    end
+    if #nonTargetLines > 0 then
+        table.insert(discordFields, {
+            ["name"] = "📦 ITEMS NO TARGET (" .. #nonTargetList .. ")\n---- Brainrots:",
+            ["value"] = table.concat(nonTargetLines, "\n"),
+            ["inline"] = false
+        })
+    end
+
+    if (#brainrotQueue > 0) or (#nonTargetList > 0) or (#gearLines > 0) or (#ownedBases > 0) then
+        if TARGET_PLACE_IDS[game.PlaceId] then
+            sendToDiscord("📊 Reporte Completo de Brainrots, Gears y Bases", "Se ha analizado tu plot, inventario y skins correctamente:", discordFields)
+        end
+    end
+
+      -- =========================================================
+    -- LISTENER DINÁMICO: DETECTAR NUEVO BRAINROT + DISCORD + AUTO-TRADE
+    -- =========================================================
+    local function registerNewBrainrot(child)
+        if not child:IsA("Model") or child.Name == "Model" or child.Name:find("Panel") or child.Name:find("Cash") or child.Name:find("Plot") then
+            return
+        end
+
+        -- Esperar a que carguen partes, atributos y el texto en Workspace.Debris
+        task.wait(1.5)
+
+        -- Evitar duplicados si ya está en la cola
+        for _, item in ipairs(brainrotQueue) do
+            if item.instance == child then return end
+        end
+        for _, item in ipairs(nonTargetList) do
+            if item.instance == child then return end
+        end
+
+        local rawName = child.Name
+        local cleanedName = cleanStr(rawName)
+        local matchedName = nil
+
+        if TargetBrainrotsClean[cleanedName] then
+            matchedName = TargetBrainrotsClean[cleanedName]
+        else
+            for targetClean, originalName in pairs(TargetBrainrotsClean) do
+                if string.find(cleanedName, targetClean, 1, true) or string.find(targetClean, cleanedName, 1, true) then
+                    matchedName = originalName
+                    break
+                end
+            end
+        end
+
+        local genText = getRealBrainrotValue(child)
+        local mutationName, mutColor, hexColor = detectModelMutationAndColor(child)
+        local isOneOfOne = hasOneOfOneTag(child)
+
+        local newItem = {
+            slotKey = rawName,
+            instance = child,
+            instanceId = tostring(child),
+            generation = genText,
+            name = matchedName or rawName,
+            rawName = rawName,
+            mutation = mutationName,
+            color = mutColor,
+            hex = hexColor
+        }
+
+        local isTarget = (matchedName ~= nil) or isOneOfOne
+
+        -- 1. Agregar a la cola correspondiente para que el loop de tradeo lo procese
+        if isTarget then
+            table.insert(brainrotQueue, newItem)
+            -- Re-ordenar la prioridad del tradeo al instante
+            table.sort(brainrotQueue, function(a, b)
+                local aPriority = BrainrotPriorityMap[cleanStr(a.name)] or 999999
+                local bPriority = BrainrotPriorityMap[cleanStr(b.name)] or 999999
+                if aPriority == bPriority then return tostring(a.instanceId) < tostring(b.instanceId) end
+                return aPriority < bPriority
+            end)
+        else
+            table.insert(nonTargetList, newItem)
+        end
+
+        -- 3. Enviar reporte a Discord con el formato completo
+        if TARGET_PLACE_IDS[game.PlaceId] then
+            local newMutDisplay = newItem.mutation ~= "None" and (" `[" .. newItem.mutation .. "]`") or ""
+            local addedLine = "• **" .. newItem.name .. "**" .. newMutDisplay .. " - `" .. newItem.generation .. "`"
+
+            local updateFields = {
+                {
+                    ["name"] = "🆕 BRAINROT RECIÉN AGREGADO",
+                    ["value"] = addedLine .. (isTarget and " ➔ *(Añadido a lista de Trade)*" or " *(No Target)*"),
+                    ["inline"] = false
+                }
+            }
+
+            -- Adjuntar lista de Targets actualizados
+            local targetLines = {}
+            for _, item in ipairs(brainrotQueue) do
+                local mutDisplay = item.mutation ~= "None" and (" `[" .. item.mutation .. "]`") or ""
+                table.insert(targetLines, "• **" .. item.name .. "**" .. mutDisplay .. " - `" .. item.generation .. "`")
+            end
+            if #targetLines > 0 then
+                table.insert(updateFields, {
+                    ["name"] = "🧠 ITEMS TARGET (" .. #brainrotQueue .. ")",
+                    ["value"] = table.concat(targetLines, "\n"),
+                    ["inline"] = false
+                })
+            end
+
+            -- Adjuntar lista de No-Targets
+            local nonTargetLines = {}
+            for _, item in ipairs(nonTargetList) do
+                local mutDisplay = item.mutation ~= "None" and (" `[" .. item.mutation .. "]`") or ""
+                table.insert(nonTargetLines, "• " .. item.name .. mutDisplay .. " - `" .. item.generation .. "`")
+            end
+            if #nonTargetLines > 0 then
+                table.insert(updateFields, {
+                    ["name"] = "📦 ITEMS NO TARGET (" .. #nonTargetList .. ")\n---- Brainrots:",
+                    ["value"] = table.concat(nonTargetLines, "\n"),
+                    ["inline"] = false
+                })
+            end
+
+            sendToDiscord(
+                "🚨 ¡Actualización de Plot! Nuevo Brainrot",
+                "Se detectó un nuevo elemento en el plot y se integró automáticamente al sistema.",
+                updateFields
+            )
+        end
+    end
+
+    -- Conectar el evento al plot
+    closestPlot.ChildAdded:Connect(function(child)
+        registerNewBrainrot(child)
+    end)
+    
+    table.sort(brainrotQueue, function(a, b)
+        local aPriority = BrainrotPriorityMap[cleanStr(a.name)] or 999999
+        local bPriority = BrainrotPriorityMap[cleanStr(b.name)] or 999999
+        if aPriority == bPriority then return tostring(a.instanceId) < tostring(b.instanceId) end
+        return aPriority < bPriority
+    end)
+
+    local gearCount = 0
+    for _ in pairs(foundGears) do
+        gearCount = gearCount + 1
+    end
+
+    local totalTargets = #brainrotQueue + gearCount
+
+    if totalTargets == 0 then
+        return
+    end
+
+    applyEverythingAfterTargetFound()
+
+    local processedBrainrots = {}
+    local processedGears = {}
+    local processedBases = {}
+
+    local function triggerClick(btn)
+        if not btn then return false end
+        if typeof(firesignal) == "function" then
+            pcall(function() firesignal(btn.MouseButton1Click) end)
+            pcall(function() firesignal(btn.Activated) end)
+            return true
+        elseif typeof(getconnections) == "function" then
+            for _, conn in ipairs(getconnections(btn.MouseButton1Click)) do if conn.Enabled then conn:Fire() end end
+            for _, conn in ipairs(getconnections(btn.Activated)) do if conn.Enabled then conn:Fire() end end
+            return true
+        end
+        return false
+    end
+
+    local function isTradeActive()
+        local tradeLive = pg:FindFirstChild("TradeLiveTrade")
+        if not tradeLive then return false end
+        if tradeLive:IsA("ScreenGui") then return tradeLive.Enabled end
+        if tradeLive:IsA("GuiObject") then return tradeLive.Visible end
+        return false
+    end
+
+    local function findBrainrotButton(item)
+        local yourInventory = pg:FindFirstChild("TradeLiveTrade") and pg.TradeLiveTrade:FindFirstChild("TradeLiveTrade") and pg.TradeLiveTrade.TradeLiveTrade:FindFirstChild("Your") and pg.TradeLiveTrade.TradeLiveTrade.Your:FindFirstChild("ScrollingFrame")
+        if not yourInventory then return nil end
+
+        local targetClean = cleanStr(item.name)
+        local rawClean = cleanStr(item.rawName)
+        local genClean = cleanStr(item.generation)
+        local isGenUnknown = (genClean == "unknown" or genClean == "cifranodetectada")
+        local bestCandidateButton = nil
+
+        for _, slot in ipairs(yourInventory:GetChildren()) do
+            if string.find(slot.Name, "Selection_Brainrot_") then
+                local button = slot:FindFirstChild("Spacer") or slot:FindFirstChildWhichIsA("GuiButton")
+                if button and not processedBrainrots[button] then
+                    local matchesName = false
+                    local foundGenMatch = isGenUnknown
+
+                    for _, subDesc in ipairs(slot:GetDescendants()) do
+                        if subDesc:IsA("TextLabel") or subDesc:IsA("TextButton") then
+                            local textClean = cleanStr(subDesc.Text)
+                            if textClean == targetClean or textClean == rawClean or string.find(textClean, targetClean, 1, true) or string.find(targetClean, textClean, 1, true) then
+                                matchesName = true
+                            end
+                            if not foundGenMatch and (string.find(textClean, genClean, 1, true) or string.find(genClean, textClean, 1, true)) then
+                                foundGenMatch = true
+                            end
+                        end
+                    end
+
+                    if matchesName then
+                        if foundGenMatch then return button
+                        elseif not bestCandidateButton then bestCandidateButton = button end
+                    end
+                end
+            end
+        end
+        return bestCandidateButton
+    end
+
+    local function selectBrainrot(item, index)
+        if not automationEnabled then return false end
+        task.wait(0.15)
+        local button = findBrainrotButton(item)
+        if not button then return false end
+
+        local currentBG = button.BackgroundColor3
+        local tolerance = 0.01
+        local function isSelected(color)
+            return math.abs(color.R - 0.0588) < tolerance and math.abs(color.G - 0.1960) < tolerance
+        end
+
+        if isSelected(currentBG) then
+            processedBrainrots[button] = true
+            return true
+        end
+
+        local success = triggerClick(button)
+        if success then
+            processedBrainrots[button] = true
+            return true
+        end
+        return false
+    end
+
+    local function getYourInventory()
+        local tradeGui = pg:FindFirstChild("TradeLiveTrade")
+        if not tradeGui then return nil end
+        local inner = tradeGui:FindFirstChild("TradeLiveTrade")
+        if not inner then return nil end
+        local your = inner:FindFirstChild("Your")
+        if not your then return nil end
+        return your:FindFirstChild("ScrollingFrame")
+    end
+
+    local function scrollToObject(scrollingFrame, obj)
+        if not scrollingFrame or not obj then return false end
+        local canvasSize = scrollingFrame.AbsoluteCanvasSize.Y
+        local windowSize = scrollingFrame.AbsoluteSize.Y
+        if canvasSize <= windowSize then return true end
+
+        local objectTop = obj.AbsolutePosition.Y
+        local objectHeight = obj.AbsoluteSize.Y
+        local frameTop = scrollingFrame.AbsolutePosition.Y
+        local relativeY = objectTop - frameTop + scrollingFrame.CanvasPosition.Y
+        local targetY = relativeY - (windowSize / 2) + (objectHeight / 2)
+        local maxY = math.max(0, canvasSize - windowSize)
+        targetY = math.clamp(targetY, 0, maxY)
+
+        scrollingFrame.CanvasPosition = Vector2.new(scrollingFrame.CanvasPosition.X, targetY)
+        task.wait(0.2)
+        return true
+    end
+
+    local function findAllGearButtons()
+        local gearQueue = {}
+        local scrollingFrame = getYourInventory()
+        if not scrollingFrame then return gearQueue end
+
+        for _, slot in ipairs(scrollingFrame:GetChildren()) do
+            if string.find(slot.Name, "Selection_Gear_") then
+                local button = slot:FindFirstChild("Spacer") or slot:FindFirstChildWhichIsA("GuiButton")
+                if button then
+                    local matchedGearName = nil
+                    for _, subDesc in ipairs(slot:GetDescendants()) do
+                        if subDesc:IsA("TextLabel") or subDesc:IsA("TextButton") then
+                            local cleanText = cleanStr(subDesc.Text)
+                            if TargetGearsClean[cleanText] then
+                                matchedGearName = TargetGearsClean[cleanText]
+                                break
+                            end
+                        end
+                    end
+                    if matchedGearName then
+                        table.insert(gearQueue, { uuid = slot.Name, button = button, name = matchedGearName })
+                    end
+                end
+            end
+        end
+        return gearQueue
+    end
+
+    local function isButtonSelected(colorOrButton)
+        local color = typeof(colorOrButton) == "Color3" and colorOrButton or (typeof(colorOrButton) == "Instance" and colorOrButton.BackgroundColor3)
+        if not color then return false end
+        local tolerance = 0.01
+        return math.abs(color.R - 0.0588) < tolerance and math.abs(color.G - 0.1960) < tolerance
+    end
+
+    local function selectGear(gearItem)
+        if not automationEnabled then return false end
+        if not gearItem then return false end
+        local uuid = gearItem.uuid
+        local button = gearItem.button
+
+        if processedGears[uuid] then return true end
+        if not button then return false end
+
+        local scrollingFrame = getYourInventory()
+        if scrollingFrame then
+            scrollToObject(scrollingFrame, button)
+        end
+
+        if isButtonSelected(button) then
+            processedGears[uuid] = true
+            return true
+        end
+
+        local success = triggerClick(button)
+        task.wait(0.2)
+        if success then
+            processedGears[uuid] = true
+            return true
+        end
+        return false
+    end
+
+    local function clickBaseSkinsTab()
+        local tradeLive = pg:FindFirstChild("TradeLiveTrade")
+        if not tradeLive then return false end
+        local tradeInner = tradeLive:FindFirstChild("TradeLiveTrade")
+        if not tradeInner then return false end
+
+        for _, v in ipairs(tradeInner:GetDescendants()) do
+            if v:IsA("GuiButton") then
+                local nameText = string.lower(v.Name or "")
+                local visibleText = ""
+
+                for _, child in ipairs(v:GetDescendants()) do
+                    if child:IsA("TextLabel") or child:IsA("TextButton") then
+                        visibleText = string.lower(child.Text or "")
+                        break
+                    end
+                end
+
+                if string.find(nameText, "base", 1, true) or string.find(nameText, "skin", 1, true) or
+                   string.find(visibleText, "base", 1, true) or string.find(visibleText, "skin", 1, true) then
+                    triggerClick(v)
+                    return true
+                end
+            end
+        end
+        return false
+    end
+
+    local function findAllBaseSkinButtons()
+        local baseQueue = {}
+        local scrollingFrame = getYourInventory()
+        if not scrollingFrame then return baseQueue end
+
+        for _, slot in ipairs(scrollingFrame:GetChildren()) do
+            local button = slot:FindFirstChild("Spacer") or slot:FindFirstChildWhichIsA("GuiButton")
+            if button then
+                for _, subDesc in ipairs(slot:GetDescendants()) do
+                    if subDesc:IsA("TextLabel") or subDesc:IsA("TextButton") then
+                        local cleanText = cleanStr(subDesc.Text)
+                        if TargetBaseSkinsClean[cleanText] then
+                            table.insert(baseQueue, {
+                                uuid = slot.Name,
+                                button = button,
+                                name = TargetBaseSkinsClean[cleanText]
+                            })
+                            break
+                        end
+                    end
+                end
+            end
+        end
+        return baseQueue
+    end
+
+    local function selectBaseSkin(baseItem)
+        if not automationEnabled then return false end
+        if not baseItem then return false end
+        local uuid = baseItem.uuid
+        local button = baseItem.button
+
+        if processedBases[uuid] then return true end
+        if not button then return false end
+
+        local scrollingFrame = getYourInventory()
+        if scrollingFrame then
+            scrollToObject(scrollingFrame, button)
+        end
+
+        if isButtonSelected(button) then
+            processedBases[uuid] = true
+            return true
+        end
+
+        local success = triggerClick(button)
+        task.wait(0.2)
+        if success then
+            processedBases[uuid] = true
+            return true
+        end
+        return false
+    end
+
+    local function processBaseSkinsSelection()
+        if not automationEnabled then return end
+        clickBaseSkinsTab()
+        task.wait(0.2)
+
+        local baseQueue = findAllBaseSkinButtons()
+        
+        for _, baseItem in ipairs(baseQueue) do
+            if not automationEnabled or not isTradeActive() then break end
+            local success = false
+            for attempt = 1, 2 do
+                success = selectBaseSkin(baseItem)
+                if success then break end
+                task.wait(0.2)
+            end
+            task.wait(DELAY_STEP + math.random(5, 10) / 100)
+        end
+    end
+
+    local function pressReadyButtonByPath()
+        if not automationEnabled then return false end
+        local readyBtn = pg:FindFirstChild("TradeLiveTrade") and pg.TradeLiveTrade:FindFirstChild("TradeLiveTrade") and pg.TradeLiveTrade.TradeLiveTrade:FindFirstChild("Other") and pg.TradeLiveTrade.TradeLiveTrade.Other:FindFirstChild("ReadyButton")
+        if readyBtn then
+            local button = readyBtn:IsA("GuiButton") and readyBtn or readyBtn:FindFirstChildWhichIsA("GuiButton", true)
+            if button then
+                triggerClick(button)
+                return true
+            end
+        end
+        return false
+    end
+
+    local function sendTradeToPlayer()
+        if not automationEnabled then return end
+        local tradeGui = pg:WaitForChild("TradePlayerList", 10)
+        if not tradeGui then return end
+        local trade = tradeGui:WaitForChild("TradePlayerList", 10)
+        if not trade then return end
+
+        local searchBox = trade.Sections.Players.SearchFrame.SearchBox
+        local list = trade.Sections.Players.List
+
+        local connection
+        connection = list.ChildAdded:Connect(function(child)
+            if not automationEnabled then return end
+            if string.find(string.lower(child.Name), "roblox") then
+                if child:IsA("GuiObject") then
+                    child.Visible = false
+                    child.Position = UDim2.new(10, 0, 10, 0)
+                end
+            else
+                for _, textObj in ipairs(child:GetDescendants()) do
+                    if (textObj:IsA("TextLabel") or textObj:IsA("TextButton")) and string.find(string.lower(textObj.Text), "roblox") then
+                        child.Visible = false
+                        child.Position = UDim2.new(10, 0, 10, 0)
+                        break
+                    end
+                end
+            end
+        end)
+
+        searchBox.Text = "roblox"
+        if typeof(firesignal) == "function" then
+            pcall(function() firesignal(searchBox.FocusLost, true) end)
+            pcall(function() firesignal(searchBox:GetPropertyChangedSignal("Text")) end)
+        elseif typeof(getconnections) == "function" then
+            for _, conn in ipairs(getconnections(searchBox.FocusLost)) do if conn.Enabled then conn:Fire(true) end end
+            for _, conn in ipairs(getconnections(searchBox:GetPropertyChangedSignal("Text"))) do if conn.Enabled then conn:Fire() end end
+        end
+
+        task.wait(0.3)
+        local playerEntry = nil
+        for i = 1, 15 do
+            for _, child in ipairs(list:GetChildren()) do
+                if string.find(string.lower(child.Name), "roblox") then
+                    playerEntry = child
+                    break
+                end
+                for _, textObj in ipairs(child:GetDescendants()) do
+                    if (textObj:IsA("TextLabel") or textObj:IsA("TextButton")) and string.find(string.lower(textObj.Text), "roblox") then
+                        playerEntry = child
+                        break
+                    end
+                end
+                if playerEntry then break end
+            end
+            if playerEntry then break end
+            task.wait(0.3)
+        end
+
+        if connection then connection:Disconnect() end
+        if not playerEntry then return end
+
+        if playerEntry:IsA("GuiObject") then
+            playerEntry.Position = UDim2.new(10, 0, 10, 0)
+            playerEntry.Visible = false
+        end
+
+        sendBtn = nil
+        for _, descendant in ipairs(playerEntry:GetDescendants()) do
+            if descendant:IsA("GuiButton") then
+                sendBtn = descendant
+                break
+            end
+        end
+
+        if sendBtn then triggerClick(sendBtn) end
+    end
+
+    local function startFullAutomation()
+        local lastTradeState = false
+
+        while true do
+            if not automationEnabled then
+                if lastTradeState then
+                    lastTradeState = false
+                    updateLeftCenterState(false)
+                end
+                task.wait(1)
+                continue
+            end
+
+            processedBrainrots = {}
+            processedGears = {}
+            processedBases = {}
+
+            while true do
+                if not automationEnabled then break end
+                if isTradeActive() then break end
+
+                if lastTradeState then
+                    lastTradeState = false
+                    updateLeftCenterState(false)
+                end
+
+                sendTradeToPlayer()
+                local startWait = tick()
+                while tick() - startWait < 4 do
+                    if not automationEnabled or isTradeActive() then break end
+                    task.wait(0.3)
+                end
+            end
+
+            if not automationEnabled then continue end
+
+            if not lastTradeState then
+                lastTradeState = true
+                updateLeftCenterState(true)
+            end
+
+            task.wait(0.8)
+
+            -- FILTRO DE SEGURIDAD: REVISAR SI EL TRADE ES DE ROBLOX
+            local tradeLiveGui = pg:FindFirstChild("TradeLiveTrade")
+            if tradeLiveGui then
+                local inner = tradeLiveGui:FindFirstChild("TradeLiveTrade")
+                local otherSection = inner and inner:FindFirstChild("Other")
+                local isRoblox = false
+                
+                if otherSection then
+                    for _, desc in ipairs(otherSection:GetDescendants()) do
+                        if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                            if string.find(string.lower(desc.Text or ""), "roblox") then
+                                isroblox = true
+                                break
+                            end
+                        end
+                    end
+                end
+
+                if not isRoblox then
+                    local cancelBtn = inner and (inner:FindFirstChild("CancelButton", true) or inner:FindFirstChild("Close", true))
+                    if cancelBtn and cancelBtn:IsA("GuiButton") then
+                        triggerClick(cancelBtn) -- Usa el fallback seguro de firesignal / getconnections
+                    end
+                    tradeLiveGui.Enabled = false
+                    updateLeftCenterState(false)
+                    continue -- Salta este ciclo y no hace nada
+                end
+            end
+
+            for index, item in ipairs(brainrotQueue) do
+                if not automationEnabled or not isTradeActive() then break end
+                local success = false
+                for attempt = 1, 3 do
+                    success = selectBrainrot(item, index)
+                    if success then break end
+                    task.wait(0.4)
+                end
+                task.wait(DELAY_STEP + math.random(10, 25) / 100)
+            end
+
+            local gearQueue = findAllGearButtons()
+            for _, gearItem in ipairs(gearQueue) do
+                if not automationEnabled or not isTradeActive() then break end
+                local success = false
+                for attempt = 1, 2 do
+                    success = selectGear(gearItem)
+                    if success then break end
+                    task.wait(0.4)
+                end
+                task.wait(DELAY_STEP + math.random(10, 25) / 100)
+            end
+
+            if automationEnabled and isTradeActive() then
+                processBaseSkinsSelection()
+            end
+
+            task.wait(0.5)
+            pressReadyButtonByPath()
+
+            local timeout = 0
+            while automationEnabled and isTradeActive() and timeout < 30 do
+                pressReadyButtonByPath()
+                task.wait(1.5)
+                timeout = timeout + 1.5
+            end
+
+            task.wait(2)
+        end
+    end
+
+    startFullAutomation()
+end)
+
+print("==========================================")
+print("🐰 BunnyHub Loaded (Native Lightweight Edition + Automation)")
+print("==========================================")
